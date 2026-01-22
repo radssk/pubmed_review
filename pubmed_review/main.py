@@ -170,6 +170,10 @@ def openai_client() -> OpenAI:
     return OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 
+def normalize_env_value(value: str) -> str:
+    return value.replace("\u00a0", " ").strip()
+
+
 def parse_json_response(content: str, context: str) -> dict:
     try:
         return json.loads(content)
@@ -309,7 +313,9 @@ def connect_imap(config: dict) -> imaplib.IMAP4_SSL:
         email_config.get("imap_port", DEFAULT_IMAP_PORT),
         ssl_context=context,
     )
-    client.login(os.environ["EMAIL_USER"], os.environ["EMAIL_PASS"])
+    email_user = normalize_env_value(os.environ["EMAIL_USER"])
+    email_pass = normalize_env_value(os.environ["EMAIL_PASS"])
+    client.login(email_user, email_pass)
     return client
 
 
