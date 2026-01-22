@@ -243,9 +243,8 @@ def google_sheets_service() -> object:
 
 
 def resolve_sheet_name(config: dict, search_name: str) -> str:
-    template = config["sheets"].get("sheet_name_template")
-    if template and search_name:
-        return template.format(search_name=search_name)
+    if search_name:
+        return search_name
     return config["sheets"]["sheet_name"]
 
 
@@ -253,7 +252,7 @@ def append_rows(config: dict, sheet_name: str, rows: list[list[str]]) -> None:
     if not rows:
         return
     service = google_sheets_service()
-    sheet_id = config["sheets"]["spreadsheet_id"]
+    sheet_id = os.environ.get("SPREADSHEET_ID") or config["sheets"]["spreadsheet_id"]
     body = {"values": rows}
     service.spreadsheets().values().append(
         spreadsheetId=sheet_id,

@@ -32,8 +32,8 @@ llm:
 sheets:
   # Google Sheets settings for output. Required if you want results written to Sheets.
   # spreadsheet_id: the long ID in the Sheet URL (https://docs.google.com/spreadsheets/d/<ID>/edit).
+  # You can also set SPREADSHEET_ID as an environment variable to avoid committing the ID.
   spreadsheet_id: "YOUR_SHEET_ID"
   # sheet_name: the tab name within the spreadsheet (e.g., "PubMed").
   sheet_name: "PubMed"
-  # Optional template for sheet tab naming when a search name exists.
-  sheet_name_template: "'{search_name}'의 정리 시트"
+  # If a search name is extracted, it will be used as the tab name instead of sheet_name.
