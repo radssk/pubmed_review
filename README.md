@@ -15,6 +15,12 @@ NCBI PubMed 메일을 읽어서 논문을 선별하고 LLM 요약을 만든 뒤 
   - 또는 `GOOGLE_SERVICE_ACCOUNT_FILE` 경로 사용 가능
 - `CONFIG_PATH`: 설정 파일 경로 (기본 `config.yaml`)
 
+## Google Sheets 설정 방법
+1. Google Sheets에서 스프레드시트를 생성합니다.
+2. 주소창 URL에서 `/d/<ID>/edit` 사이의 `<ID>`를 `config.yaml`의 `sheets.spreadsheet_id`에 넣습니다.
+3. 서비스 계정 이메일을 스프레드시트에 **편집자**로 공유합니다.
+4. 메일 제목에서 추출된 검색명이 없다면 `sheets.sheet_name` 탭에 기록됩니다.
+
 ## 로컬 실행
 ```bash
 python -m pubmed_review.main
