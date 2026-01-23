@@ -229,6 +229,11 @@ def resolve_sheet_name(config: dict, search_name: str, sheet_name: str | None) -
     return resolved
 
 
+def format_sheet_range(sheet_name: str, cell_range: str) -> str:
+    escaped_name = sheet_name.replace("'", "''")
+    return f"'{escaped_name}'!{cell_range}"
+
+
 def append_rows(config: dict, sheet_name: str, rows: list[list[str]]) -> None:
     if not rows:
         LOGGER.info("No rows to append to Sheets. Skipping update.")
@@ -240,7 +245,7 @@ def append_rows(config: dict, sheet_name: str, rows: list[list[str]]) -> None:
     try:
         service.spreadsheets().values().append(
             spreadsheetId=sheet_id,
-            range=f"{sheet_name}!A1",
+            range=format_sheet_range(sheet_name, "A1"),
             valueInputOption="RAW",
             insertDataOption="INSERT_ROWS",
             body=body,
