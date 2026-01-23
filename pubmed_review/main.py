@@ -273,12 +273,6 @@ def load_pubmed_settings(config: dict) -> tuple[dict, str]:
     return pubmed_config, search_query
 
 
-def resolve_reldate(pubmed_config: dict, schedule_days: int) -> int:
-    if pubmed_config.get("reldate") is None:
-        return schedule_days
-    return int(pubmed_config.get("reldate"))
-
-
 def fetch_pubmed_ids(pubmed_config: dict, search_query: str, reldate: int) -> list[str]:
     email_address = os.environ.get("PUBMED_EMAIL") or pubmed_config.get("email", "")
     Entrez.email = normalize_env_value(email_address)
@@ -316,8 +310,10 @@ def main() -> None:
 
     pubmed_config, search_query = load_pubmed_settings(config)
     schedule_days = config.get("workflow", {}).get("schedule_days", 1)
-    reldate = resolve_reldate(pubmed_config, schedule_days)
-    pmids = fetch_pubmed_ids(pubmed_config, search_query, reldate)
+    reldate = pubmed_config.get("reldate")
+    if reldate is None:
+        reldate = schedule_days
+    pmids = fetch_pubmed_ids(pubmed_config, search_query, int(reldate))
     search_name = pubmed_config.get("search_name", "")
 
     if not pmids:
