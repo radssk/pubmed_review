@@ -205,6 +205,17 @@ def google_sheets_service() -> object:
     return build("sheets", "v4", credentials=credentials)
 
 
+def get_service_account_email() -> str | None:
+    json_data = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+    if not json_data:
+        return None
+    try:
+        info = json.loads(json_data)
+    except json.JSONDecodeError:
+        return None
+    return info.get("client_email")
+
+
 def resolve_sheet_name(config: dict, search_name: str, sheet_name: str | None) -> str:
     if sheet_name:
         LOGGER.info("Using configured sheet name: %s", sheet_name)
@@ -251,19 +262,31 @@ def append_rows(config: dict, sheet_name: str, rows: list[list[str]]) -> None:
                     break
         except (json.JSONDecodeError, TypeError, AttributeError):
             message = None
-        if exc.resp is not None and exc.resp.status == 403 and reason == "SERVICE_DISABLED":
-            activation_link = (
-                activation_url
-                or "https://console.developers.google.com/apis/api/sheets.googleapis.com/overview"
-            )
-            LOGGER.error(
-                "Google Sheets API is disabled for the configured project. Enable it at %s",
-                activation_link,
-            )
-            raise RuntimeError(
-                "Google Sheets API is disabled for the configured project. "
-                f"Enable it at {activation_link}"
-            ) from exc
+        if exc.resp is not None and exc.resp.status == 403:
+            if reason == "SERVICE_DISABLED":
+                activation_link = (
+                    activation_url
+                    or "https://console.developers.google.com/apis/api/sheets.googleapis.com/overview"
+                )
+                LOGGER.error(
+                    "Google Sheets API is disabled for the configured project. Enable it at %s",
+                    activation_link,
+                )
+                raise RuntimeError(
+                    "Google Sheets API is disabled for the configured project. "
+                    f"Enable it at {activation_link}"
+                ) from exc
+            if reason == "PERMISSION_DENIED":
+                service_email = get_service_account_email()
+                share_hint = (
+                    f"Share the spreadsheet with the service account ({service_email})."
+                    if service_email
+                    else "Share the spreadsheet with the service account email."
+                )
+                raise RuntimeError(
+                    "Google Sheets permission denied. "
+                    f"Check SPREADSHEET_ID and access grants. {share_hint}"
+                ) from exc
         LOGGER.exception(
             "Failed to append rows to Google Sheets. Status=%s Message=%s",
             exc.resp.status if exc.resp is not None else "unknown",
