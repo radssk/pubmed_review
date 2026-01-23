@@ -11,6 +11,7 @@ import yaml
 from Bio import Entrez
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from openai import OpenAI
 
 DEFAULT_SHEET_NAME = "PubMed"
@@ -204,6 +205,17 @@ def google_sheets_service() -> object:
     return build("sheets", "v4", credentials=credentials)
 
 
+def get_service_account_email() -> str | None:
+    json_data = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+    if not json_data:
+        return None
+    try:
+        info = json.loads(json_data)
+    except json.JSONDecodeError:
+        return None
+    return info.get("client_email")
+
+
 def resolve_sheet_name(config: dict, search_name: str, sheet_name: str | None) -> str:
     if sheet_name:
         LOGGER.info("Using configured sheet name: %s", sheet_name)
@@ -217,6 +229,11 @@ def resolve_sheet_name(config: dict, search_name: str, sheet_name: str | None) -
     return resolved
 
 
+def format_sheet_range(sheet_name: str, cell_range: str) -> str:
+    escaped_name = sheet_name.replace("'", "''")
+    return f"'{escaped_name}'!{cell_range}"
+
+
 def append_rows(config: dict, sheet_name: str, rows: list[list[str]]) -> None:
     if not rows:
         LOGGER.info("No rows to append to Sheets. Skipping update.")
@@ -225,13 +242,62 @@ def append_rows(config: dict, sheet_name: str, rows: list[list[str]]) -> None:
     sheet_id = os.environ.get("SPREADSHEET_ID") or config["sheets"]["spreadsheet_id"]
     LOGGER.info("Appending %d rows to sheet %s", len(rows), sheet_name)
     body = {"values": rows}
-    service.spreadsheets().values().append(
-        spreadsheetId=sheet_id,
-        range=f"{sheet_name}!A1",
-        valueInputOption="RAW",
-        insertDataOption="INSERT_ROWS",
-        body=body,
-    ).execute()
+    try:
+        service.spreadsheets().values().append(
+            spreadsheetId=sheet_id,
+            range=format_sheet_range(sheet_name, "A1"),
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body=body,
+        ).execute()
+    except HttpError as exc:
+        message = None
+        activation_url = None
+        reason = None
+        try:
+            content = exc.content.decode("utf-8") if isinstance(exc.content, (bytes, bytearray)) else exc.content
+            payload = json.loads(content)
+            error = payload.get("error", {})
+            message = error.get("message")
+            for detail in error.get("details", []) or []:
+                if detail.get("@type") == "type.googleapis.com/google.rpc.ErrorInfo":
+                    metadata = detail.get("metadata", {})
+                    activation_url = metadata.get("activationUrl")
+                    reason = detail.get("reason")
+                    break
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            message = None
+        if exc.resp is not None and exc.resp.status == 403:
+            if reason == "SERVICE_DISABLED":
+                activation_link = (
+                    activation_url
+                    or "https://console.developers.google.com/apis/api/sheets.googleapis.com/overview"
+                )
+                LOGGER.error(
+                    "Google Sheets API is disabled for the configured project. Enable it at %s",
+                    activation_link,
+                )
+                raise RuntimeError(
+                    "Google Sheets API is disabled for the configured project. "
+                    f"Enable it at {activation_link}"
+                ) from exc
+            if reason == "PERMISSION_DENIED":
+                service_email = get_service_account_email()
+                share_hint = (
+                    f"Share the spreadsheet with the service account ({service_email})."
+                    if service_email
+                    else "Share the spreadsheet with the service account email."
+                )
+                raise RuntimeError(
+                    "Google Sheets permission denied. "
+                    f"Check SPREADSHEET_ID and access grants. {share_hint}"
+                ) from exc
+        LOGGER.exception(
+            "Failed to append rows to Google Sheets. Status=%s Message=%s",
+            exc.resp.status if exc.resp is not None else "unknown",
+            message or "unknown",
+        )
+        raise
 
 
 def build_rows(results: list[ReviewResult]) -> list[list[str]]:
