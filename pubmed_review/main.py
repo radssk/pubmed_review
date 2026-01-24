@@ -35,6 +35,56 @@ COLUMN_HEADERS = [
     "Strengths",
 ]
 
+# Default LLM Configuration
+DEFAULT_LLM_CONFIG = {
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "novelty_prompt": """Determine whether the paper demonstrates genuinely novel, cutting-edge methodology.
+Only mark as novel if the contribution is clearly new and meaningfully distinct from existing work.
+Title: {title}
+Journal: {journal}
+Abstract: {abstract}""",
+    "novelty_schema": {
+        "name": "novelty_assessment",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "is_novel": {"type": "boolean"},
+                "reason": {"type": "string"}
+            },
+            "required": ["is_novel", "reason"],
+            "additionalProperties": False
+        }
+    },
+    "summary_prompt": """Summarize the abstract in no more than 3 lines and describe why it is strong or impactful.
+Title: {title}
+Journal: {journal}
+Abstract: {abstract}""",
+    "summary_schema": {
+        "name": "summary_response",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "summary": {"type": "string"},
+                "strengths": {"type": "string"}
+            },
+            "required": ["summary", "strengths"],
+            "additionalProperties": False
+        }
+    }
+}
+
+# Default PubMed Configuration
+DEFAULT_PUBMED_CONFIG = {
+    "retmax": 200,
+    "datetype": "edat",
+}
+
+# Default Workflow Configuration
+DEFAULT_WORKFLOW_CONFIG = {
+    "schedule_days": 3,
+}
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -61,10 +111,28 @@ class ReviewResult:
 
 
 def load_config(path: str) -> dict:
-    """Load configuration from YAML file."""
+    """Load configuration from YAML file and merge with defaults."""
     LOGGER.info("Loading config from %s", path)
     with open(path, "r", encoding="utf-8") as file:
-        return yaml.safe_load(file)
+        config = yaml.safe_load(file)
+
+    # Merge with defaults
+    if "llm" not in config:
+        config["llm"] = {}
+    for key, value in DEFAULT_LLM_CONFIG.items():
+        config["llm"].setdefault(key, value)
+
+    if "pubmed" not in config:
+        config["pubmed"] = {}
+    for key, value in DEFAULT_PUBMED_CONFIG.items():
+        config["pubmed"].setdefault(key, value)
+
+    if "workflow" not in config:
+        config["workflow"] = {}
+    for key, value in DEFAULT_WORKFLOW_CONFIG.items():
+        config["workflow"].setdefault(key, value)
+
+    return config
 
 
 def chunked(values: Iterable[str], size: int) -> Iterable[list[str]]:
