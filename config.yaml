@@ -24,6 +24,7 @@ filters:
     "The Lancet*",       # The Lancet, The Lancet Oncology, etc.
     "New England Journal of Medicine",
     "JAMA",              # JAMA only (not JAMA Network journals)
+    "Sci Rep",
 
     # Radiology (specific journals)
     "Radiology",         # Radiology only (exact match, excludes European/Skeletal Radiology)
