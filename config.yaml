@@ -18,7 +18,7 @@ filters:
     "Nature", "Science", "Cell", "Nature Medicine", "The Lancet",
     "New England Journal of Medicine", "JAMA",
     # Radiology
-    "Radiology", "European Radiology", "American Journal of Roentgenology",
+    "Radiology", "Radiology AI", "European Radiology", "American Journal of Roentgenology",
     "Radiographics", "Journal of Nuclear Medicine",
     # AI & Medical Imaging
     "Nature Machine Intelligence",
@@ -33,9 +33,9 @@ llm:
 
   # Novelty evaluation prompt (Available variables: {title}, {journal}, {abstract})
   novelty_prompt: |
-    이 논문이 정말로 혁신적이고 참신한(novel) 방법론을 제시하는지 매우 엄격하게 평가하세요.
+    이 논문이 정말로 혁신적이고 참신한(novel) 방법론을 제시하는지 엄격하게 평가하세요.
     기존 연구의 incremental improvement나 단순 응용은 novel로 인정하지 마세요.
-    완전히 새로운 methodology, architecture, 또는 breakthrough만 novel로 판정하세요.
+    새로운 methodology, architecture, 또는 breakthrough만 novel로 판정하세요.
 
     제목: {title}
     저널: {journal}
