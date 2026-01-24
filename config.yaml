@@ -1,74 +1,35 @@
 pubmed:
-  # NCBI 연락용 이메일 주소 (Entrez 필수).
   email: "your_email@example.com"
-  # PubMed 검색 쿼리 (단일 쿼리 사용 시).
-  search_query: '("Radiology") AND (("large language model") OR ("natural language processing") OR (Natural language processing[MeSH]) OR ("GPT"))'
-  # 지난 N일간 등록된 논문 (Daily update).
-  # reldate를 비우면 workflow.schedule_days 값을 사용합니다.
-  reldate:
-  # DB 등록일 기준 (누락 방지).
-  datetype: "edat"
-  # 최대 반환 논문 수 (필요시 조정).
-  retmax: 200
-  # 시트 탭 이름을 직접 지정하고 싶다면 설정.
-  sheet_name: "Radiology NLP"
-  # 복수 검색을 사용할 때는 searches에 쿼리를 여러 개 등록합니다.
-  # searches:
-  #   - query: '("Radiology") AND (("large language model") OR ("natural language processing") OR (Natural language processing[MeSH]) OR ("GPT"))'
-  #     sheet_name: "Radiology NLP"
-  #   - query: '("CT") AND ("deep learning")'
-  #     sheet_name: "CT DL"
-
-filters:
-  # High-impact journals for rule-based inclusion checks.
-  high_if_journals: ["Nature", "Science", "Cell", "Nature Medicine", "The Lancet", "New England Journal of Medicine", "Scientific Reports"]
-
-llm:
-  # NOTE: Use only JSON Schema-compatible models (examples: gpt-4o-mini, gpt-4.1-mini, gpt-4.1).
-  model: "gpt-4o-mini"
-  temperature: 0.2
-  novelty_prompt: |
-    Determine whether the paper demonstrates genuinely novel, cutting-edge methodology.
-    Only mark as novel if the contribution is clearly new and meaningfully distinct from existing work.
-    Title: {title}
-    Journal: {journal}
-    Abstract: {abstract}
-  novelty_schema:
-    name: "novelty_assessment"
-    schema:
-      type: "object"
-      properties:
-        is_novel:
-          type: "boolean"
-        reason:
-          type: "string"
-      required: ["is_novel", "reason"]
-      additionalProperties: false
-  summary_prompt: |
-    Summarize the abstract in no more than 3 lines and describe why it is strong or impactful.
-    Title: {title}
-    Journal: {journal}
-    Abstract: {abstract}
-  summary_schema:
-    name: "summary_response"
-    schema:
-      type: "object"
-      properties:
-        summary:
-          type: "string"
-        strengths:
-          type: "string"
-      required: ["summary", "strengths"]
-      additionalProperties: false
+  searches:
+    - query: '("Radiology") AND (("large language model") OR ("natural language processing") OR ("GPT"))'
+      sheet_name: "Radiology NLP"
+    - query: '("CT") AND ("deep learning")'
+      sheet_name: "CT Deep Learning"
+    - query: '("MRI") AND ("artificial intelligence")'
+      sheet_name: "MRI AI"
 
 sheets:
-  # Google Sheets settings for output. Required if you want results written to Sheets.
-  # spreadsheet_id: the long ID in the Sheet URL (https://docs.google.com/spreadsheets/d/<ID>/edit).
-  # You can also set SPREADSHEET_ID as an environment variable to avoid committing the ID.
   spreadsheet_id: "YOUR_SHEET_ID"
-  # If a search name is extracted, it will be used as the tab name.
-  # If not, sheet_name can be used as a fallback (default: "PubMed").
 
-workflow:
-  # GitHub Actions schedule cadence in days (UTC). Keep this in sync with .github/workflows/pubmed_review.yml.
-  schedule_days: 2
+filters:
+  high_if_journals:
+    # General High-Impact
+    - "Nature"
+    - "Science"
+    - "Cell"
+    - "Nature Medicine"
+    - "The Lancet"
+    - "New England Journal of Medicine"
+    - "JAMA"
+    # Radiology
+    - "Radiology"
+    - "European Radiology"
+    - "American Journal of Roentgenology"
+    - "Radiographics"
+    - "Journal of Nuclear Medicine"
+    # AI & Medical Imaging
+    - "Nature Machine Intelligence"
+    - "IEEE Transactions on Pattern Analysis and Machine Intelligence"
+    - "IEEE Transactions on Medical Imaging"
+    - "Medical Image Analysis"
+    - "Artificial Intelligence in Medicine"
