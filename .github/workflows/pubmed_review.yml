@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +18,28 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          pytest tests/ -v --cov=pubmed_review --cov-report=term
+
+  run:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Validate config
+        env:
+          DRY_RUN: "true"
+          CONFIG_PATH: config.yaml
+        run: |
+          python -m pubmed_review.main
       - name: Run automation
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

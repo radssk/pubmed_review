@@ -135,6 +135,51 @@ def load_config(path: str) -> dict:
     return config
 
 
+def validate_config(config: dict) -> None:
+    """Validate configuration has all required fields."""
+    errors = []
+
+    # Check pubmed section
+    if "pubmed" not in config:
+        errors.append("Missing required section: pubmed")
+    else:
+        pubmed = config["pubmed"]
+
+        # Check email
+        if not pubmed.get("email") and not os.environ.get("PUBMED_EMAIL"):
+            errors.append("Missing required field: pubmed.email (or PUBMED_EMAIL env var)")
+
+        # Check searches
+        if "searches" not in pubmed or not pubmed["searches"]:
+            errors.append("Missing required field: pubmed.searches (must have at least one search)")
+        else:
+            for i, search in enumerate(pubmed["searches"]):
+                if not search.get("query"):
+                    errors.append(f"Missing query in pubmed.searches[{i}]")
+
+    # Check sheets section
+    if "sheets" not in config:
+        errors.append("Missing required section: sheets")
+    else:
+        sheets = config["sheets"]
+        if not sheets.get("spreadsheet_id") and not os.environ.get("SPREADSHEET_ID"):
+            errors.append("Missing required field: sheets.spreadsheet_id (or SPREADSHEET_ID env var)")
+
+    # Check filters section
+    if "filters" not in config:
+        errors.append("Missing required section: filters")
+    else:
+        filters = config["filters"]
+        if "high_if_journals" not in filters:
+            errors.append("Missing required field: filters.high_if_journals")
+        elif not isinstance(filters["high_if_journals"], list):
+            errors.append("filters.high_if_journals must be a list")
+
+    if errors:
+        error_message = "Configuration validation failed:\n" + "\n".join(f"  - {e}" for e in errors)
+        raise ValueError(error_message)
+
+
 def chunked(values: Iterable[str], size: int) -> Iterable[list[str]]:
     """Split iterable into chunks of specified size."""
     batch: list[str] = []
@@ -592,9 +637,16 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    # Load configuration
+    # Load and validate configuration
     config_path = os.environ.get("CONFIG_PATH", "config.yaml")
     config = load_config(config_path)
+    validate_config(config)
+
+    # Check for dry-run mode
+    dry_run = os.environ.get("DRY_RUN", "").lower() in ("true", "1", "yes")
+    if dry_run:
+        LOGGER.info("DRY RUN MODE - No API calls will be made")
+        return
 
     # Setup PubMed
     pubmed_config = config.get("pubmed", {})

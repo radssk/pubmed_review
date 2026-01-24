@@ -63,6 +63,14 @@ export SPREADSHEET_ID="1AbC...xYz"  # Google Sheets ID
 
 ### 4. 로컬 테스트
 
+**Dry-run 모드 (API 호출 없이 설정 검증):**
+
+```bash
+DRY_RUN=true python -m pubmed_review.main
+```
+
+**실제 실행:**
+
 ```bash
 python -m pubmed_review.main
 ```
@@ -72,6 +80,22 @@ python -m pubmed_review.main
 | Date | PMID | Title | Journal | ... | Summary |
 |------|------|-------|---------|-----|---------|
 | 2026-01-24 | 38123456 | Novel deep learning... | Radiology | ... | This study presents... |
+
+<details>
+<summary>📸 예상 결과물 보기</summary>
+
+Google Sheets에 다음 형식으로 저장됩니다:
+
+```
+| Date       | PMID     | Title                          | Journal   | Pub Date  | DOI              | Selection    | Novelty Reason        | Summary           | Strengths         |
+|------------|----------|--------------------------------|-----------|-----------|------------------|--------------|-----------------------|-------------------|-------------------|
+| 2026-01-24 | 38123456 | Deep learning for CT diagnosis | Radiology | 2026 Jan  | 10.1148/rad.123  | High IF      | Not evaluated (High IF)| This study uses...| Strong dataset... |
+| 2026-01-24 | 38123457 | Novel AI approach for MRI      | Other     | 2026 Jan  | 10.1234/abc.456  | Novelty      | New architecture...   | Introduces a...   | Innovative method |
+```
+
+각 논문은 자동으로 평가되어 High IF 또는 Novelty 기준으로 필터링됩니다.
+
+</details>
 
 ### 5. GitHub Actions 자동화
 
@@ -84,6 +108,48 @@ python -m pubmed_review.main
 `.github/workflows/pubmed_review.yml`이 이미 설정되어 있어서 **3일마다 자동 실행**됩니다.
 
 수동 실행: Actions 탭 → PubMed Review Automation → Run workflow
+
+---
+
+## 💰 Cost Estimation
+
+### OpenAI API Costs (gpt-4o-mini)
+
+**Typical usage per run:**
+- 50 papers found
+- 30 papers filtered (20 High IF, 10 Novel)
+- High IF papers: 1 API call each (summary only)
+- Novel papers: 2 API calls each (novelty + summary)
+
+**Token usage:**
+- Novelty check: ~600 tokens per paper
+- Summary: ~700 tokens per paper
+
+**Estimated cost per run:**
+```
+High IF papers:  20 × 700 tokens  = 14,000 tokens
+Novel papers:    10 × 1,300 tokens = 13,000 tokens
+Total:                                27,000 tokens ≈ $0.01 USD
+```
+
+**Monthly cost (every 3 days):**
+- ~10 runs/month × $0.01 = **$0.10 USD/month**
+
+**Cost optimization tips:**
+1. Add more journals to `high_if_journals` (skips novelty check)
+2. Reduce `retmax` if you don't need 200 papers
+3. Use narrower search queries
+
+### Google Sheets API
+
+**Free tier:**
+- 60 requests/minute per user
+- This tool uses <10 requests per run
+- **Cost: $0**
+
+### PubMed API
+
+**Free** - No cost, no API key required (just email for contact)
 
 ---
 
@@ -270,27 +336,69 @@ PubMed 검색
 
 ## 🛠️ Development
 
+### Running Tests
+
 ```bash
-# 로컬 테스트
-python -m pubmed_review.main
+# Install test dependencies
+pip install -r requirements.txt
 
-# 특정 설정 파일 사용
-CONFIG_PATH=config.dev.yaml python -m pubmed_review.main
+# Run all tests
+pytest tests/ -v
 
-# 디버그 모드
+# Run with coverage
+pytest tests/ --cov=pubmed_review --cov-report=html
+
+# Run specific test
+pytest tests/test_main.py::TestClassName::test_method -v
+```
+
+### Local Development
+
+```bash
+# Dry-run mode (no API calls)
+DRY_RUN=true python -m pubmed_review.main
+
+# Debug mode
 LOG_LEVEL=DEBUG python -m pubmed_review.main
+
+# Custom config file
+CONFIG_PATH=config.dev.yaml python -m pubmed_review.main
+```
+
+### Project Structure
+
+```
+pubmed_review/
+├── pubmed_review/       # Main package
+│   ├── __init__.py
+│   └── main.py         # Core logic
+├── tests/              # Test suite
+│   ├── __init__.py
+│   └── test_main.py
+├── config.yaml         # Configuration
+└── requirements.txt    # Dependencies
 ```
 
 ---
 
 ## 📄 License
 
-MIT License
+MIT License - see [LICENSE](LICENSE) file for details
 
 ---
 
 ## 🤝 Contributing
 
-Issues와 Pull Requests 환영합니다!
+We welcome contributions! 🙌
 
-버그 리포트: [Issues](https://github.com/radssk/pubmed_review/issues)
+- 📖 Read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
+- 🐛 Report bugs via [Issues](https://github.com/radssk/pubmed_review/issues)
+- 💡 Suggest features via [Discussions](https://github.com/radssk/pubmed_review/discussions)
+
+**Quick Contribution Guide:**
+1. Fork the repo
+2. Create a feature branch
+3. Write tests for your changes
+4. Make your changes
+5. Run tests: `pytest tests/ -v`
+6. Submit a Pull Request
