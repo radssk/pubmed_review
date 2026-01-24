@@ -41,23 +41,58 @@ class TestIsHighIF:
     """Tests for is_high_if function."""
 
     def test_exact_match(self):
+        """Exact match should work (case-insensitive)."""
         assert is_high_if("Nature", ["Nature", "Science"]) is True
+        assert is_high_if("Science", ["Nature", "Science"]) is True
 
-    def test_partial_match(self):
-        assert is_high_if("Nature Medicine", ["Nature"]) is True
+    def test_exact_match_only_without_wildcard(self):
+        """Without wildcard, should only match exact journal names."""
+        assert is_high_if("Nature Medicine", ["Nature"]) is False
+        assert is_high_if("Skeletal Radiology", ["Radiology"]) is False
+        assert is_high_if("The Lancet Oncology", ["Lancet"]) is False
 
     def test_case_insensitive(self):
+        """Matching should be case-insensitive."""
         assert is_high_if("NATURE", ["nature"]) is True
         assert is_high_if("nature", ["NATURE"]) is True
+        assert is_high_if("Nature Medicine", ["nature*"]) is True
+        assert is_high_if("NATURE MEDICINE", ["nature*"]) is True
 
     def test_no_match(self):
+        """Non-matching journals should return False."""
         assert is_high_if("Random Journal", ["Nature", "Science"]) is False
 
     def test_empty_list(self):
+        """Empty list should return False."""
         assert is_high_if("Nature", []) is False
 
-    def test_substring_match(self):
-        assert is_high_if("The Lancet Oncology", ["Lancet"]) is True
+    def test_wildcard_prefix_match(self):
+        """Wildcard at end should match journals starting with pattern."""
+        assert is_high_if("Nature Medicine", ["Nature*"]) is True
+        assert is_high_if("Nature Biotechnology", ["Nature*"]) is True
+        assert is_high_if("Nature", ["Nature*"]) is True
+        assert is_high_if("The Lancet", ["The Lancet*"]) is True
+        assert is_high_if("The Lancet Oncology", ["The Lancet*"]) is True
+
+    def test_wildcard_suffix_match(self):
+        """Wildcard at start should match journals ending with pattern."""
+        assert is_high_if("European Radiology", ["*Radiology"]) is True
+        assert is_high_if("Skeletal Radiology", ["*Radiology"]) is True
+        assert is_high_if("Radiology", ["*Radiology"]) is True
+
+    def test_wildcard_no_false_positives(self):
+        """Wildcard should not match unrelated journals."""
+        assert is_high_if("Science", ["Nature*"]) is False
+        assert is_high_if("Radiology AI", ["*Radiology"]) is False
+        assert is_high_if("Neuroradiology", ["Radiology*"]) is False
+
+    def test_multiple_patterns(self):
+        """Should match if any pattern matches."""
+        patterns = ["Nature", "Science*", "*Radiology"]
+        assert is_high_if("Nature", patterns) is True
+        assert is_high_if("Science Advances", patterns) is True
+        assert is_high_if("European Radiology", patterns) is True
+        assert is_high_if("Random Journal", patterns) is False
 
 
 class TestBuildArticle:

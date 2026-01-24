@@ -197,10 +197,12 @@ PubMed 검색 → 메타데이터 수집 → 중복 체크
 **예시:**
 ```
 PubMed 페이지에서 표시되는 이름: "Nature Medicine"
-→ config.yaml: "Nature Medicine"
+→ config.yaml: "Nature Medicine"  (정확히 이 저널만)
+→ config.yaml: "Nature*"          (Nature 시리즈 전체)
 
 PubMed 페이지에서 표시되는 이름: "The Lancet Oncology"
-→ config.yaml: "The Lancet"  (substring matching으로 모든 Lancet 시리즈 매치)
+→ config.yaml: "The Lancet Oncology"  (정확히 이 저널만)
+→ config.yaml: "The Lancet*"          (Lancet 시리즈 전체)
 ```
 
 ### 방법 2: PubMed API로 직접 확인
@@ -237,20 +239,36 @@ Processing PMID: 12345678
 
 ### 저널 이름 매칭 규칙
 
-이 도구는 **대소문자 구분 없는 부분 문자열 매칭**을 사용합니다:
+이 도구는 **정확한 매칭 (exact match) + 와일드카드 지원**을 사용합니다:
+
+#### 기본: 정확한 매칭 (안전)
 
 | config.yaml | PubMed 저널 이름 | 매칭 여부 |
 |-------------|------------------|-----------|
 | `"Nature"` | "Nature" | ✅ 매칭 |
-| `"Nature"` | "Nature Medicine" | ✅ 매칭 (부분 문자열) |
+| `"Nature"` | "Nature Medicine" | ❌ 매칭 안됨 |
 | `"Nature"` | "nature" | ✅ 매칭 (대소문자 무시) |
-| `"Lancet"` | "The Lancet Oncology" | ✅ 매칭 (부분 문자열) |
-| `"Radiology"` | "European Radiology" | ✅ 매칭 (부분 문자열) |
-| `"Radiology"` | "Skeletal Radiology" | ✅ 매칭 (부분 문자열) |
+| `"Radiology"` | "Radiology" | ✅ 매칭 |
+| `"Radiology"` | "European Radiology" | ❌ 매칭 안됨 |
+| `"Radiology"` | "Skeletal Radiology" | ❌ 매칭 안됨 |
 
-**주의:** 부분 매칭으로 인해 의도하지 않은 저널도 매칭될 수 있습니다.
-- 예: `"Radiology"`를 추가하면 "Skeletal Radiology", "Pediatric Radiology" 등도 모두 매칭됨
-- 특정 저널만 매칭하려면 더 긴 이름 사용: `"European Radiology"`
+#### 와일드카드 `*` 사용 (저널 시리즈 매칭)
+
+| config.yaml | PubMed 저널 이름 | 매칭 여부 |
+|-------------|------------------|-----------|
+| `"Nature*"` | "Nature" | ✅ 매칭 |
+| `"Nature*"` | "Nature Medicine" | ✅ 매칭 |
+| `"Nature*"` | "Nature Biotechnology" | ✅ 매칭 |
+| `"The Lancet*"` | "The Lancet" | ✅ 매칭 |
+| `"The Lancet*"` | "The Lancet Oncology" | ✅ 매칭 |
+| `"*Radiology"` | "Radiology" | ✅ 매칭 |
+| `"*Radiology"` | "European Radiology" | ✅ 매칭 |
+| `"*Radiology"` | "Skeletal Radiology" | ✅ 매칭 |
+
+**안전성 개선:**
+- ✅ 기본적으로 정확한 매칭만 수행 (의도하지 않은 저널 매칭 방지)
+- ✅ 와일드카드로 저널 시리즈만 명시적으로 포함 가능
+- ✅ "Radiology" → "Skeletal Radiology" 같은 오매칭 방지
 
 ### 팁: High IF 저널 리스트 확장하기
 
@@ -263,16 +281,22 @@ Processing PMID: 12345678
 ```yaml
 filters:
   high_if_journals: [
-    # 정확한 이름
-    "Nature Medicine",
-    "The Lancet Oncology",
+    # 정확한 매칭 (안전)
+    "Science",                              # Science만 매칭
+    "Cell",                                 # Cell만 매칭
+    "Radiology",                            # Radiology만 매칭 (Skeletal Radiology 제외)
+    "European Radiology",                   # European Radiology만 매칭
 
-    # 시리즈 전체 매칭
-    "Nature",        # Nature, Nature Medicine, Nature Biotechnology 등 모두 매칭
-    "Lancet",        # The Lancet, The Lancet Oncology 등 모두 매칭
-    "Radiology",     # Radiology, European Radiology 등 모두 매칭
+    # 와일드카드로 저널 시리즈 매칭
+    "Nature*",                              # Nature, Nature Medicine, Nature Biotechnology 등
+    "The Lancet*",                          # The Lancet, The Lancet Oncology 등
+    "*Radiology",                           # Radiology, European Radiology, Skeletal Radiology 등
   ]
 ```
+
+**권장 방식:**
+- ✅ **정확한 이름 사용** (기본): 의도하지 않은 매칭 방지
+- ⚠️ **와일드카드 사용** (필요시만): Nature 시리즈, Lancet 시리즈 등
 
 ---
 

@@ -287,9 +287,52 @@ def build_article(pmid: str, summary: dict, abstracts: dict[str, str]) -> Articl
 
 
 def is_high_if(journal: str, high_if_list: list[str]) -> bool:
-    """Check if journal name contains any high impact factor journal name (case-insensitive substring match)."""
+    """Check if journal matches any high IF journal pattern (case-insensitive).
+
+    Matching rules:
+    - Exact match by default: "Nature" matches only "Nature"
+    - Wildcard support: "Nature*" matches "Nature Medicine", "Nature Biotechnology", etc.
+    - "*Radiology" matches "European Radiology", etc.
+    - "The Lancet*" matches "The Lancet", "The Lancet Oncology", etc.
+    """
     normalized = journal.lower()
-    return any(name.lower() in normalized for name in high_if_list)
+
+    for pattern in high_if_list:
+        pattern_lower = pattern.lower()
+
+        # Check if pattern contains wildcard
+        if "*" in pattern_lower:
+            # Convert wildcard pattern to regex-like matching
+            if pattern_lower.endswith("*"):
+                # Prefix match: "Nature*" matches "Nature Medicine"
+                prefix = pattern_lower[:-1]  # Remove trailing *
+                if normalized.startswith(prefix):
+                    return True
+            elif pattern_lower.startswith("*"):
+                # Suffix match: "*Radiology" matches "European Radiology"
+                suffix = pattern_lower[1:]  # Remove leading *
+                if normalized.endswith(suffix):
+                    return True
+            else:
+                # Contains match: "The*Lancet" matches "The Lancet"
+                # Split by * and check if all parts appear in order
+                parts = pattern_lower.split("*")
+                pos = 0
+                match = True
+                for part in parts:
+                    idx = normalized.find(part, pos)
+                    if idx == -1:
+                        match = False
+                        break
+                    pos = idx + len(part)
+                if match:
+                    return True
+        else:
+            # Exact match (case-insensitive)
+            if normalized == pattern_lower:
+                return True
+
+    return False
 
 
 def openai_client() -> OpenAI:

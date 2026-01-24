@@ -12,18 +12,32 @@ sheets:
   spreadsheet_id: "YOUR_SHEET_ID"
 
 filters:
-  # High Impact Factor journals (exact match, case-insensitive)
+  # High Impact Factor journals
+  # Matching rules:
+  #   - Exact match by default (case-insensitive): "Nature" matches only "Nature"
+  #   - Wildcard support: "Nature*" matches "Nature Medicine", "Nature Biotechnology", etc.
   high_if_journals: [
-    # General High-Impact
-    "Nature", "Science", "Cell", "Nature Medicine", "The Lancet",
-    "New England Journal of Medicine", "JAMA",
-    # Radiology
-    "Radiology", "Radiology AI", "European Radiology", "American Journal of Roentgenology",
-    "Radiographics", "Academic Radiology",
+    # General High-Impact (exact names or series)
+    "Nature*",           # Nature, Nature Medicine, Nature Biotechnology, etc.
+    "Science",           # Science only
+    "Cell",              # Cell only
+    "The Lancet*",       # The Lancet, The Lancet Oncology, etc.
+    "New England Journal of Medicine",
+    "JAMA",              # JAMA only (not JAMA Network journals)
+
+    # Radiology (specific journals)
+    "Radiology",         # Radiology only (exact match, excludes European/Skeletal Radiology)
+    "Radiology: Artificial Intelligence",  # Specific journal name
+    "European Radiology",
+    "American Journal of Roentgenology",
+    "Radiographics",
+    "Academic Radiology",
+
     # AI & Medical Imaging
     "Nature Machine Intelligence",
     "IEEE Transactions on Pattern Analysis and Machine Intelligence",
-    "IEEE Transactions on Medical Imaging", "Medical Image Analysis",
+    "IEEE Transactions on Medical Imaging",
+    "Medical Image Analysis",
     "Artificial Intelligence in Medicine"
   ]
 
