@@ -33,3 +33,26 @@ filters:
     - "IEEE Transactions on Medical Imaging"
     - "Medical Image Analysis"
     - "Artificial Intelligence in Medicine"
+
+# LLM Configuration (Optional: Customize prompts and model settings)
+# Uncomment and modify to override defaults
+# llm:
+#   model: "gpt-4o-mini"
+#   temperature: 0.2
+#
+#   # Novelty evaluation prompt
+#   # Available variables: {title}, {journal}, {abstract}
+#   novelty_prompt: |
+#     Determine whether the paper demonstrates genuinely novel, cutting-edge methodology.
+#     Only mark as novel if the contribution is clearly new and meaningfully distinct from existing work.
+#     Title: {title}
+#     Journal: {journal}
+#     Abstract: {abstract}
+#
+#   # Summary generation prompt
+#   # Available variables: {title}, {journal}, {abstract}
+#   summary_prompt: |
+#     Summarize the abstract in no more than 3 lines and describe why it is strong or impactful.
+#     Title: {title}
+#     Journal: {journal}
+#     Abstract: {abstract}
