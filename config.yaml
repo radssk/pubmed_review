@@ -3,10 +3,10 @@ pubmed:
   searches:
     - query: '("Radiology") AND (("large language model") OR ("natural language processing") OR ("GPT"))'
       sheet_name: "Radiology NLP"
-    - query: '("CT") AND ("deep learning")'
-      sheet_name: "CT Deep Learning"
-    - query: '("MRI") AND ("artificial intelligence")'
-      sheet_name: "MRI AI"
+    # - query: '("CT") AND ("deep learning")'
+    #   sheet_name: "CT Deep Learning"
+    # - query: '("MRI") AND ("artificial intelligence")'
+    #   sheet_name: "MRI AI"
 
 sheets:
   spreadsheet_id: "YOUR_SHEET_ID"
