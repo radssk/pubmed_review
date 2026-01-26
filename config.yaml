@@ -22,19 +22,19 @@ filters:
     "Science",           # Science only
     "Cell",              # Cell only
     "The Lancet*",       # The Lancet, The Lancet Oncology, etc.
-    "New England Journal of Medicine",
+    "The New England journal of medicine",
     "JAMA",              # JAMA only (not JAMA Network journals)
     "Scientific reports",
 
     # Radiology (specific journals)
     "Radiology",         # Radiology only (exact match, excludes European/Skeletal Radiology)
-    "Radiology: Artificial Intelligence",  # Specific journal name
+    "Radiology. Artificial intelligence",
     "Radiology. Imaging cancer",
     "Radiology. Cardiothoracic imaging",
     "Investigative radiology",
     "European Radiology",
     "European journal of radiology",
-    "American Journal of Roentgenology",
+    "AJR. American journal of roentgenology",
     "Radiographics",
     "Academic radiology",
     "Korean journal of radiology",
@@ -42,7 +42,7 @@ filters:
 
     # Digital Health
     "npj Digital Medicine",
-    "The Lancet Digital Health",
+    "The Lancet. Digital health",
 
     # AI & Medical Imaging
     "Nature Machine Intelligence",
