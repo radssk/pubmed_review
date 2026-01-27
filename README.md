@@ -40,21 +40,20 @@ llm:
 
 #### SPREADSHEET_ID 찾는 법
 
-Google Sheets URL 구조:
 ```
 https://docs.google.com/spreadsheets/d/XXXXXXXX/edit
                                        ^^^^^^^^
                                        이 부분 
 ```
 
-### 3. Google Cloud 설정
+### Google Cloud 설정
 
 1. [Google Cloud Console](https://console.cloud.google.com)에서 프로젝트 생성
 2. Service Account 생성 → JSON 키 다운로드
 3. [Google Sheets API 활성화](https://console.developers.google.com/apis/api/sheets.googleapis.com/overview)
 4. Google Sheets를 서비스 계정 이메일과 **편집자**로 공유
 
-### 4. 실행
+### 실행
 
 - **자동**: 3일마다 (GitHub Actions)
 - **수동**: Actions 탭 → Run workflow
