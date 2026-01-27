@@ -155,13 +155,10 @@ def validate_config(config: dict) -> None:
                 if not search.get("query"):
                     errors.append(f"Missing query in pubmed.searches[{i}]")
 
-    # Check sheets section
-    if "sheets" not in config:
-        errors.append("Missing required section: sheets")
-    else:
-        sheets = config["sheets"]
-        if not sheets.get("spreadsheet_id") and not os.environ.get("SPREADSHEET_ID"):
-            errors.append("Missing required field: sheets.spreadsheet_id (or SPREADSHEET_ID env var)")
+    # Check sheets config
+    sheets = config.get("sheets", {})
+    if not sheets.get("spreadsheet_id") and not os.environ.get("SPREADSHEET_ID"):
+        errors.append("Missing required field: sheets.spreadsheet_id (or SPREADSHEET_ID env var)")
 
     # Check filters section
     if "filters" not in config:
@@ -748,7 +745,7 @@ def main() -> None:
     # Initialize services
     client = openai_client()
     service = google_sheets_service()
-    sheet_id = os.environ.get("SPREADSHEET_ID") or config["sheets"]["spreadsheet_id"]
+    sheet_id = os.environ.get("SPREADSHEET_ID") or config.get("sheets", {}).get("spreadsheet_id", "")
     high_if_list = config["filters"]["high_if_journals"]
 
     # Process each search
