@@ -128,15 +128,11 @@ llm:
 | 컬럼 | 설명 |
 |------|------|
 | Date | 처리 날짜 |
-| PMID | PubMed ID |
 | Title | 논문 제목 |
 | Journal | 저널명 |
-| Publication Date | 발행일 |
-| DOI | DOI |
 | Selection Criteria | 선별 기준 (Selected Journal / Novelty) |
-| Novelty Reason | 참신성 근거 |
 | Summary | 1~2문장 요약 |
-| Strengths | 강점 1문장 |
+| Comment | 한줄평 (주목할 점) |
 
 ---
 

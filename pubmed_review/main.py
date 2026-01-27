@@ -24,15 +24,11 @@ RETRY_DELAYS = [2, 4, 8, 16]
 
 COLUMN_HEADERS = [
     "Date",
-    "PMID",
     "Title",
     "Journal",
-    "Publication Date",
-    "DOI",
     "Selection Criteria",
-    "Novelty Reason",
     "Summary",
-    "Strengths",
+    "Comment",
 ]
 
 # Default LLM Configuration
@@ -62,16 +58,16 @@ Journal: {journal}
 Abstract: {abstract}
 
 For the summary: In 1-2 short sentences, explain what this paper is about as if someone asked "What is this paper?" Don't include specific numbers, metrics, or detailed results. Just explain what they did and what they found in plain language.
-For the strengths: In 1 sentence, explain what makes this paper stand out — what aspect is particularly impressive or valuable, and why.""",
+For the comment: In 1 sentence, explain what makes this paper noteworthy — what aspect stands out and why it matters.""",
     "summary_schema": {
         "name": "summary_response",
         "schema": {
             "type": "object",
             "properties": {
                 "summary": {"type": "string"},
-                "strengths": {"type": "string"}
+                "comment": {"type": "string"}
             },
-            "required": ["summary", "strengths"],
+            "required": ["summary", "comment"],
             "additionalProperties": False
         }
     }
@@ -108,9 +104,8 @@ class ReviewResult:
     article: Article
     selected_journal: bool
     is_novel: bool
-    novelty_reason: str
     summary: str
-    strengths: str
+    comment: str
 
 
 def load_config(path: str) -> dict:
@@ -427,7 +422,7 @@ def llm_summary(client: OpenAI, config: dict, article: Article) -> tuple[str, st
         title=article.title, journal=article.journal, abstract=article.abstract
     )
     data = llm_call(client, config, prompt, config["llm"]["summary_schema"], max_tokens=2500)
-    return data.get("summary", ""), data.get("strengths", "")
+    return data.get("summary", ""), data.get("comment", "")
 
 
 def google_sheets_service():
@@ -456,24 +451,24 @@ def get_service_account_email() -> str | None:
         return None
 
 
-def get_existing_pmids(service, sheet_id: str, sheet_name: str) -> set[str]:
-    """Get existing PMIDs from Google Sheets to avoid duplicates."""
+def get_existing_titles(service, sheet_id: str, sheet_name: str) -> set[str]:
+    """Get existing titles from Google Sheets to avoid duplicates."""
     try:
         result = service.spreadsheets().values().get(
             spreadsheetId=sheet_id,
-            range=f"{sheet_name}!B:B"  # Column B contains PMIDs
+            range=f"{sheet_name}!B:B"  # Column B contains Titles
         ).execute()
 
         values = result.get("values", [])
-        # Skip header row and extract PMIDs
-        pmids = {row[0] for row in values[1:] if row and row[0] and row[0] != "PMID"}
-        LOGGER.info("Found %d existing PMIDs in sheet", len(pmids))
-        return pmids
+        # Skip header row and extract titles
+        titles = {row[0] for row in values[1:] if row and row[0] and row[0] != "Title"}
+        LOGGER.info("Found %d existing titles in sheet", len(titles))
+        return titles
     except HttpError as exc:
         if exc.resp and exc.resp.status == 404:
             LOGGER.info("Sheet %s not found, will create new", sheet_name)
             return set()
-        LOGGER.warning("Could not fetch existing PMIDs: %s", exc)
+        LOGGER.warning("Could not fetch existing titles: %s", exc)
         return set()
 
 
@@ -482,7 +477,7 @@ def ensure_headers(service, sheet_id: str, sheet_name: str) -> None:
     try:
         result = service.spreadsheets().values().get(
             spreadsheetId=sheet_id,
-            range=f"{sheet_name}!A1:J1"
+            range=f"{sheet_name}!A1:F1"
         ).execute()
 
         values = result.get("values", [])
@@ -493,7 +488,7 @@ def ensure_headers(service, sheet_id: str, sheet_name: str) -> None:
         # Add or update headers
         service.spreadsheets().values().update(
             spreadsheetId=sheet_id,
-            range=f"{sheet_name}!A1:J1",
+            range=f"{sheet_name}!A1:F1",
             valueInputOption="RAW",
             body={"values": [COLUMN_HEADERS]}
         ).execute()
@@ -567,15 +562,11 @@ def build_row(result: ReviewResult) -> list[str]:
 
     return [
         datetime.utcnow().strftime("%Y-%m-%d"),
-        article.pmid,
         article.title,
         article.journal,
-        article.pub_date,
-        article.doi,
         ", ".join(selection),
-        result.novelty_reason,
         result.summary,
-        result.strengths,
+        result.comment,
     ]
 
 
@@ -595,25 +586,22 @@ def process_article(
 
     # Only check novelty if not already a selected journal
     is_novel = False
-    novelty_reason = ""
     if not selected_journal_flag:
         is_novel, novelty_reason = llm_novelty(client, config, article)
         if not is_novel:
             LOGGER.info("Skipping PMID %s - neither Selected Journal nor Novel", article.pmid)
             return None
-    else:
-        novelty_reason = "Not evaluated (Selected Journal)"
+        LOGGER.info("PMID %s novel: %s", article.pmid, novelty_reason)
 
     # Generate summary for articles that passed filters
-    summary, strengths = llm_summary(client, config, article)
+    summary, comment = llm_summary(client, config, article)
 
     return ReviewResult(
         article=article,
         selected_journal=selected_journal_flag,
         is_novel=is_novel,
-        novelty_reason=novelty_reason,
         summary=summary,
-        strengths=strengths,
+        comment=comment,
     )
 
 
@@ -670,32 +658,33 @@ def process_search(
         LOGGER.info("No new PMIDs found")
         return
 
-    # Get existing PMIDs to avoid duplicates
-    existing_pmids = get_existing_pmids(service, sheet_id, sheet_name)
-    new_pmids = [pmid for pmid in pmids if pmid not in existing_pmids]
-
-    if not new_pmids:
-        LOGGER.info("All PMIDs already processed (found %d duplicates)", len(pmids))
-        return
-
-    LOGGER.info("Processing %d new PMIDs (%d duplicates skipped)", len(new_pmids), len(pmids) - len(new_pmids))
+    # Get existing titles to avoid duplicates
+    existing_titles = get_existing_titles(service, sheet_id, sheet_name)
 
     # Ensure headers exist
     ensure_headers(service, sheet_id, sheet_name)
 
     # Fetch article data
-    summaries, abstracts = fetch_pubmed_data(new_pmids)
+    summaries, abstracts = fetch_pubmed_data(pmids)
 
     # Process articles with batch saving
     batch = []
     total_saved = 0
+    skipped_duplicates = 0
 
-    for pmid in new_pmids:
+    for pmid in pmids:
         article = build_article(pmid, summaries, abstracts)
+
+        # Skip duplicates by title
+        if article.title and article.title in existing_titles:
+            skipped_duplicates += 1
+            continue
+
         result = process_article(article, client, config, high_if_list)
 
         if result:
             batch.append(build_row(result))
+            existing_titles.add(article.title)
 
             # Save in batches to prevent data loss
             if len(batch) >= SAVE_BATCH_SIZE:
@@ -709,6 +698,8 @@ def process_search(
         append_rows(service, sheet_id, sheet_name, batch)
         total_saved += len(batch)
 
+    if skipped_duplicates:
+        LOGGER.info("Skipped %d duplicate articles", skipped_duplicates)
     LOGGER.info("Search complete - saved %d articles to %s", total_saved, sheet_name)
 
 

@@ -209,20 +209,18 @@ class TestBuildRow:
             article=article,
             selected_journal=True,
             is_novel=True,
-            novelty_reason="Novel method",
             summary="Summary text",
-            strengths="Strong validation"
+            comment="Noteworthy finding"
         )
 
         row = build_row(result)
 
-        assert row[1] == "12345"  # PMID
-        assert row[2] == "Test"   # Title
-        assert row[3] == "Nature" # Journal
-        assert row[6] == "Selected Journal, Novelty"  # Selection Criteria
-        assert row[7] == "Novel method"
-        assert row[8] == "Summary text"
-        assert row[9] == "Strong validation"
+        assert len(row) == 6
+        assert row[1] == "Test"    # Title
+        assert row[2] == "Nature"  # Journal
+        assert row[3] == "Selected Journal, Novelty"  # Selection Criteria
+        assert row[4] == "Summary text"
+        assert row[5] == "Noteworthy finding"
 
     def test_selected_journal_only(self):
         article = Article(
@@ -239,13 +237,12 @@ class TestBuildRow:
             article=article,
             selected_journal=True,
             is_novel=False,
-            novelty_reason="Not evaluated",
             summary="Summary",
-            strengths="Strengths"
+            comment="Comment"
         )
 
         row = build_row(result)
-        assert row[6] == "Selected Journal"
+        assert row[3] == "Selected Journal"
 
     def test_novel_only(self):
         article = Article(
@@ -262,13 +259,12 @@ class TestBuildRow:
             article=article,
             selected_journal=False,
             is_novel=True,
-            novelty_reason="Novel approach",
             summary="Summary",
-            strengths="Strengths"
+            comment="Comment"
         )
 
         row = build_row(result)
-        assert row[6] == "Novelty"
+        assert row[3] == "Novelty"
 
 
 class TestLoadConfig:
