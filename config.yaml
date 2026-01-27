@@ -1,5 +1,4 @@
 pubmed:
-  email: "your_email@example.com"
   searches:
     - query: '("Radiology") AND (("large language model") OR ("natural language processing") OR ("GPT"))'
       sheet_name: "Radiology NLP"
@@ -7,9 +6,6 @@ pubmed:
     #   sheet_name: "CT Deep Learning"
     # - query: '("MRI") AND ("artificial intelligence")'
     #   sheet_name: "MRI AI"
-
-sheets:
-  spreadsheet_id: "YOUR_SHEET_ID"
 
 filters:
   # Selected journals (journals you always want to track)
