@@ -11,7 +11,7 @@ PubMed 쿼리 검색 → Selected Journal? → Yes → AI 요약/강점 정리 �
 ```
 
 
-## Setup
+## How to Setup
 
 ### 1. Fork & `config.yaml` 수정
 
@@ -71,7 +71,7 @@ https://docs.google.com/spreadsheets/d/XXXXXXXX/edit
 
 **비용 줄이기**: 모델을 `gpt-5-nano`로 변경 / `retmax` 줄이기 / Selected Journal 리스트 확장 (novelty 호출 생략)
 
-## Misc
+## Miscellaneous
 
 ### Output 컬럼
 
