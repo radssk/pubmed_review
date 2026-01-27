@@ -9,11 +9,11 @@ PubMed 최신 논문을 자동으로 검색하고, AI로 평가한 뒤 Google Sh
 - 🔍 **자동 검색**: PubMed에서 설정한 쿼리로 최신 논문 자동 수집
 - 🤖 **AI 평가**: OpenAI GPT로 논문 참신성 평가 및 요약 생성
 - 📊 **자동 저장**: Google Sheets에 결과 자동 저장
-- 🎯 **스마트 필터링**: High IF 저널 또는 참신한 논문만 선별
+- 🎯 **스마트 필터링**: Selected Journal 또는 참신한 논문만 선별
 - ♻️ **중복 방지**: 이미 처리한 논문은 자동으로 스킵
 - 💾 **배치 저장**: 10개씩 배치 저장으로 안정성 향상
 - 🔄 **자동 재시도**: 네트워크 오류 시 exponential backoff으로 최대 4회 재시도
-- 💰 **비용 최적화**: High IF 논문은 novelty 체크 생략
+- 💰 **비용 최적화**: Selected Journal 논문은 novelty 체크 생략
 
 ## 🚀 Quick Start
 
@@ -74,7 +74,7 @@ PubMed 최신 논문을 자동으로 검색하고, AI로 평가한 뒤 Google Sh
 
 - **gpt-5-nano**: 단순 요약만 필요한 경우 최적
 - **gpt-5-mini**: 대부분의 경우 권장 (현재 기본값)
-- High IF 저널 리스트 확장 → novelty 체크 생략으로 API 호출 50% 감소
+- Selected Journal 리스트 확장 → novelty 체크 생략으로 API 호출 50% 감소
 - `config.yaml`의 `retmax` 조정 (기본 200)
 
 **무료 서비스:** Google Sheets API, PubMed API
@@ -107,7 +107,7 @@ llm:
     Abstract: {abstract}
 
   summary_prompt: |
-    논문을 2줄로 요약하고 강점을 1줄로 설명하세요.
+    동료에게 논문을 쉽게 설명해주듯이 답변하세요.
     Title: {title}
     Abstract: {abstract}
 ```
@@ -117,7 +117,7 @@ llm:
 | 설정 | 기본값 | 설명 |
 |------|--------|------|
 | `llm.model` | gpt-5-mini | gpt-5-nano, gpt-5-mini, gpt-5.2 |
-| `filters.high_if_journals` | [Nature, Science, ...] | High IF 저널 리스트 |
+| `filters.high_if_journals` | [Nature, Science, ...] | Selected Journal 리스트 |
 | `pubmed.reldate` | 3 | 검색 기간(일) |
 | `pubmed.retmax` | 200 | 최대 논문 수 |
 
@@ -133,10 +133,10 @@ llm:
 | Journal | 저널명 |
 | Publication Date | 발행일 |
 | DOI | DOI |
-| Selection Criteria | 선별 기준 (High IF / Novelty) |
+| Selection Criteria | 선별 기준 (Selected Journal / Novelty) |
 | Novelty Reason | 참신성 근거 |
-| Summary | 2줄 요약 |
-| Strengths | 강점 1줄 |
+| Summary | 1~2문장 요약 |
+| Strengths | 강점 1문장 |
 
 ---
 
@@ -160,7 +160,7 @@ RuntimeError: Permission denied. Share the spreadsheet with: xxx@...
 ### LLM 비용이 너무 많이 나옴
 1. `gpt-5-nano` 모델로 변경
 2. `retmax` 줄이기 (예: 50)
-3. High IF 저널 리스트 확장
+3. Selected Journal 리스트 확장
 
 ---
 
@@ -170,14 +170,14 @@ RuntimeError: Permission denied. Share the spreadsheet with: xxx@...
 PubMed 검색 → 메타데이터 수집 → 중복 체크
     ↓
 각 논문마다:
-  High IF 저널? → Yes → 요약 생성 → 저장
+  Selected Journal? → Yes → 요약 생성 → 저장
               → No → AI 참신성 평가 → 참신함? → Yes → 요약 생성 → 저장
                                             → No → 스킵
     ↓
 10개씩 배치로 Google Sheets 저장
 ```
 
-**비용 최적화**: High IF 논문은 novelty API 호출 생략 → 비용 50% 절감
+**비용 최적화**: Selected Journal 논문은 novelty API 호출 생략 → 비용 50% 절감
 
 ---
 
@@ -232,7 +232,7 @@ curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=Y
 Processing PMID: 12345678
   - Title: Article Title
   - Journal: Nature Medicine  ← 이 이름 확인
-  - High IF: False
+  - Selected Journal: False
 ```
 
 ### 저널 이름 매칭 규칙
@@ -268,7 +268,7 @@ Processing PMID: 12345678
 - ✅ 와일드카드로 저널 시리즈만 명시적으로 포함 가능
 - ✅ "Radiology" → "Skeletal Radiology" 같은 오매칭 방지
 
-### 팁: High IF 저널 리스트 확장하기
+### 팁: Selected Journal 리스트 확장하기
 
 1. 관심 분야의 주요 저널 PMID 몇 개를 PubMed에서 찾기
 2. 위 방법으로 정확한 저널 이름 확인

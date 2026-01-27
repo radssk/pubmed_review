@@ -55,10 +55,14 @@ Abstract: {abstract}""",
             "additionalProperties": False
         }
     },
-    "summary_prompt": """Summarize the abstract in no more than 3 lines and describe why it is strong or impactful.
+    "summary_prompt": """You are explaining a research paper to a colleague in a casual, easy-to-understand way.
+
 Title: {title}
 Journal: {journal}
-Abstract: {abstract}""",
+Abstract: {abstract}
+
+For the summary: In 1-2 short sentences, explain what this paper is about as if someone asked "What is this paper?" Don't include specific numbers, metrics, or detailed results. Just explain what they did and what they found in plain language.
+For the strengths: In 1 sentence, explain what makes this paper stand out — what aspect is particularly impressive or valuable, and why.""",
     "summary_schema": {
         "name": "summary_response",
         "schema": {
@@ -102,7 +106,7 @@ class Article:
 @dataclass
 class ReviewResult:
     article: Article
-    high_if: bool
+    selected_journal: bool
     is_novel: bool
     novelty_reason: str
     summary: str
@@ -314,8 +318,8 @@ def build_article(pmid: str, summary: dict, abstracts: dict[str, str]) -> Articl
     )
 
 
-def is_high_if(journal: str, high_if_list: list[str]) -> bool:
-    """Check if journal matches any high IF journal pattern (case-insensitive).
+def is_selected_journal(journal: str, selected_journals: list[str]) -> bool:
+    """Check if journal matches any selected journal pattern (case-insensitive).
 
     Matching rules:
     - Exact match by default: "Nature" matches only "Nature"
@@ -325,7 +329,7 @@ def is_high_if(journal: str, high_if_list: list[str]) -> bool:
     """
     normalized = journal.lower()
 
-    for pattern in high_if_list:
+    for pattern in selected_journals:
         pattern_lower = pattern.lower()
 
         # Check if pattern contains wildcard
@@ -556,8 +560,8 @@ def build_row(result: ReviewResult) -> list[str]:
     """Build a single row for Google Sheets."""
     article = result.article
     selection = []
-    if result.high_if:
-        selection.append("High IF")
+    if result.selected_journal:
+        selection.append("Selected Journal")
     if result.is_novel:
         selection.append("Novelty")
 
@@ -586,26 +590,26 @@ def process_article(
         LOGGER.info("Skipping PMID %s - no abstract", article.pmid)
         return None
 
-    # Check High IF first (cheaper than LLM call)
-    high_if_flag = is_high_if(article.journal, high_if_list)
+    # Check selected journal first (cheaper than LLM call)
+    selected_journal_flag = is_selected_journal(article.journal, high_if_list)
 
-    # Only check novelty if not already High IF
+    # Only check novelty if not already a selected journal
     is_novel = False
     novelty_reason = ""
-    if not high_if_flag:
+    if not selected_journal_flag:
         is_novel, novelty_reason = llm_novelty(client, config, article)
         if not is_novel:
-            LOGGER.info("Skipping PMID %s - neither High IF nor Novel", article.pmid)
+            LOGGER.info("Skipping PMID %s - neither Selected Journal nor Novel", article.pmid)
             return None
     else:
-        novelty_reason = "Not evaluated (High IF journal)"
+        novelty_reason = "Not evaluated (Selected Journal)"
 
     # Generate summary for articles that passed filters
     summary, strengths = llm_summary(client, config, article)
 
     return ReviewResult(
         article=article,
-        high_if=high_if_flag,
+        selected_journal=selected_journal_flag,
         is_novel=is_novel,
         novelty_reason=novelty_reason,
         summary=summary,

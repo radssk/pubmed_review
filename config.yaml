@@ -12,7 +12,7 @@ sheets:
   spreadsheet_id: "YOUR_SHEET_ID"
 
 filters:
-  # High Impact Factor journals
+  # Selected journals (journals you always want to track)
   # Matching rules:
   #   - Exact match by default (case-insensitive): "Nature" matches only "Nature"
   #   - Wildcard support: "Nature*" matches "Nature Medicine", "Nature Biotechnology", etc.
@@ -71,12 +71,12 @@ llm:
 
   # Summary generation prompt (Available variables: {title}, {journal}, {abstract})
   summary_prompt: |
-    논문을 정확히 2줄로 요약하고, 강점을 1줄로 설명하세요.
+    동료에게 논문을 쉽게 설명해주듯이 답변하세요.
 
     제목: {title}
     저널: {journal}
     초록: {abstract}
 
-    답변은 한글로 작성하되, 중요 키워드(method명, dataset명, metric명 등)는 영어 그대로 사용하세요.
-    - summary: 정확히 2줄
-    - strengths: 정확히 1줄
+    답변은 한글로 작성하되, 중요 키워드(method명, model명 등)는 영어 그대로 사용하세요.
+    - summary: "이 논문 뭐야?" 라고 물었을 때 짧게 1~2문장으로 답하듯이 써주세요. 구체적인 수치나 결과값은 빼고, 뭘 어떻게 해서 어떤 결과를 얻었는지만 쉽게 설명하세요.
+    - strengths: 이 논문이 어떤 점에서 뛰어난지, 왜 주목할 만한지 1문장으로 간결하게 설명하세요.

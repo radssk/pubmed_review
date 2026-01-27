@@ -136,8 +136,8 @@ def f(x):  # No docstring, unclear name
 ```python
 from unittest.mock import Mock, patch
 
-def test_process_article_with_high_if():
-    """Test that High IF articles skip novelty check."""
+def test_process_article_with_selected_journal():
+    """Test that Selected Journal articles skip novelty check."""
     article = Article(pmid="123", journal="Nature", ...)
     client = Mock()
     config = {...}
@@ -145,9 +145,9 @@ def test_process_article_with_high_if():
 
     result = process_article(article, client, config, high_if_list)
 
-    # Should not call novelty LLM for High IF
+    # Should not call novelty LLM for Selected Journal
     client.chat.completions.create.assert_called_once()  # Only summary
-    assert result.high_if is True
+    assert result.selected_journal is True
 ```
 
 ## Common Tasks

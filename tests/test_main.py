@@ -9,7 +9,7 @@ from pubmed_review.main import (
     Article,
     ReviewResult,
     chunked,
-    is_high_if,
+    is_selected_journal,
     build_article,
     build_row,
     load_config,
@@ -81,62 +81,62 @@ class TestChunked:
         assert result == [["a", "b"]]
 
 
-class TestIsHighIF:
-    """Tests for is_high_if function."""
+class TestIsSelectedJournal:
+    """Tests for is_selected_journal function."""
 
     def test_exact_match(self):
         """Exact match should work (case-insensitive)."""
-        assert is_high_if("Nature", ["Nature", "Science"]) is True
-        assert is_high_if("Science", ["Nature", "Science"]) is True
+        assert is_selected_journal("Nature", ["Nature", "Science"]) is True
+        assert is_selected_journal("Science", ["Nature", "Science"]) is True
 
     def test_exact_match_only_without_wildcard(self):
         """Without wildcard, should only match exact journal names."""
-        assert is_high_if("Nature Medicine", ["Nature"]) is False
-        assert is_high_if("Skeletal Radiology", ["Radiology"]) is False
-        assert is_high_if("The Lancet Oncology", ["Lancet"]) is False
+        assert is_selected_journal("Nature Medicine", ["Nature"]) is False
+        assert is_selected_journal("Skeletal Radiology", ["Radiology"]) is False
+        assert is_selected_journal("The Lancet Oncology", ["Lancet"]) is False
 
     def test_case_insensitive(self):
         """Matching should be case-insensitive."""
-        assert is_high_if("NATURE", ["nature"]) is True
-        assert is_high_if("nature", ["NATURE"]) is True
-        assert is_high_if("Nature Medicine", ["nature*"]) is True
-        assert is_high_if("NATURE MEDICINE", ["nature*"]) is True
+        assert is_selected_journal("NATURE", ["nature"]) is True
+        assert is_selected_journal("nature", ["NATURE"]) is True
+        assert is_selected_journal("Nature Medicine", ["nature*"]) is True
+        assert is_selected_journal("NATURE MEDICINE", ["nature*"]) is True
 
     def test_no_match(self):
         """Non-matching journals should return False."""
-        assert is_high_if("Random Journal", ["Nature", "Science"]) is False
+        assert is_selected_journal("Random Journal", ["Nature", "Science"]) is False
 
     def test_empty_list(self):
         """Empty list should return False."""
-        assert is_high_if("Nature", []) is False
+        assert is_selected_journal("Nature", []) is False
 
     def test_wildcard_prefix_match(self):
         """Wildcard at end should match journals starting with pattern."""
-        assert is_high_if("Nature Medicine", ["Nature*"]) is True
-        assert is_high_if("Nature Biotechnology", ["Nature*"]) is True
-        assert is_high_if("Nature", ["Nature*"]) is True
-        assert is_high_if("The Lancet", ["The Lancet*"]) is True
-        assert is_high_if("The Lancet Oncology", ["The Lancet*"]) is True
+        assert is_selected_journal("Nature Medicine", ["Nature*"]) is True
+        assert is_selected_journal("Nature Biotechnology", ["Nature*"]) is True
+        assert is_selected_journal("Nature", ["Nature*"]) is True
+        assert is_selected_journal("The Lancet", ["The Lancet*"]) is True
+        assert is_selected_journal("The Lancet Oncology", ["The Lancet*"]) is True
 
     def test_wildcard_suffix_match(self):
         """Wildcard at start should match journals ending with pattern."""
-        assert is_high_if("European Radiology", ["*Radiology"]) is True
-        assert is_high_if("Skeletal Radiology", ["*Radiology"]) is True
-        assert is_high_if("Radiology", ["*Radiology"]) is True
+        assert is_selected_journal("European Radiology", ["*Radiology"]) is True
+        assert is_selected_journal("Skeletal Radiology", ["*Radiology"]) is True
+        assert is_selected_journal("Radiology", ["*Radiology"]) is True
 
     def test_wildcard_no_false_positives(self):
         """Wildcard should not match unrelated journals."""
-        assert is_high_if("Science", ["Nature*"]) is False
-        assert is_high_if("Radiology AI", ["*Radiology"]) is False
-        assert is_high_if("Neuroradiology", ["Radiology*"]) is False
+        assert is_selected_journal("Science", ["Nature*"]) is False
+        assert is_selected_journal("Radiology AI", ["*Radiology"]) is False
+        assert is_selected_journal("Neuroradiology", ["Radiology*"]) is False
 
     def test_multiple_patterns(self):
         """Should match if any pattern matches."""
         patterns = ["Nature", "Science*", "*Radiology"]
-        assert is_high_if("Nature", patterns) is True
-        assert is_high_if("Science Advances", patterns) is True
-        assert is_high_if("European Radiology", patterns) is True
-        assert is_high_if("Random Journal", patterns) is False
+        assert is_selected_journal("Nature", patterns) is True
+        assert is_selected_journal("Science Advances", patterns) is True
+        assert is_selected_journal("European Radiology", patterns) is True
+        assert is_selected_journal("Random Journal", patterns) is False
 
 
 class TestBuildArticle:
@@ -194,7 +194,7 @@ class TestBuildArticle:
 class TestBuildRow:
     """Tests for build_row function."""
 
-    def test_high_if_and_novel(self):
+    def test_selected_journal_and_novel(self):
         article = Article(
             pmid="12345",
             title="Test",
@@ -207,7 +207,7 @@ class TestBuildRow:
         )
         result = ReviewResult(
             article=article,
-            high_if=True,
+            selected_journal=True,
             is_novel=True,
             novelty_reason="Novel method",
             summary="Summary text",
@@ -219,12 +219,12 @@ class TestBuildRow:
         assert row[1] == "12345"  # PMID
         assert row[2] == "Test"   # Title
         assert row[3] == "Nature" # Journal
-        assert row[6] == "High IF, Novelty"  # Selection Criteria
+        assert row[6] == "Selected Journal, Novelty"  # Selection Criteria
         assert row[7] == "Novel method"
         assert row[8] == "Summary text"
         assert row[9] == "Strong validation"
 
-    def test_high_if_only(self):
+    def test_selected_journal_only(self):
         article = Article(
             pmid="12345",
             title="Test",
@@ -237,7 +237,7 @@ class TestBuildRow:
         )
         result = ReviewResult(
             article=article,
-            high_if=True,
+            selected_journal=True,
             is_novel=False,
             novelty_reason="Not evaluated",
             summary="Summary",
@@ -245,7 +245,7 @@ class TestBuildRow:
         )
 
         row = build_row(result)
-        assert row[6] == "High IF"
+        assert row[6] == "Selected Journal"
 
     def test_novel_only(self):
         article = Article(
@@ -260,7 +260,7 @@ class TestBuildRow:
         )
         result = ReviewResult(
             article=article,
-            high_if=False,
+            selected_journal=False,
             is_novel=True,
             novelty_reason="Novel approach",
             summary="Summary",
