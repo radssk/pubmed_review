@@ -9,8 +9,7 @@ PubMed 쿼리 검색 → Selected Journal? → Yes → AI 요약/강점 정리 �
                                    → No  → 참신함? → AI 요약/강점 정리 → 시트 저장
                                                                   → 아님  → 스킵
 ```
-- 3일마다 GitHub Actions로 자동 실행
-- Selected Journal 논문은 novelty 체크 생략
+
 
 ## Setup
 
@@ -82,11 +81,6 @@ Date | Title | Journal | Selection Criteria | Summary | Comment
 
 저널 이름은 [PubMed](https://pubmed.ncbi.nlm.nih.gov/) 논문 상세 페이지에서 확인하세요.
 
-### Troubleshooting
-
-- **Google Sheets API is disabled** → 에러 메시지의 링크 클릭해서 API 활성화
-- **Permission denied** → Sheets를 서비스 계정 이메일과 편집자로 공유
-- **비용 과다** → `gpt-5-nano` 모델 사용 / `retmax` 줄이기
 
 ### License
 
