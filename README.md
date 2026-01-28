@@ -89,7 +89,3 @@ Date | Title | Journal | Selection Criteria | Summary | Comment
 
 > PubMed에 표시되는 저널명과 정확히 일치해야 합니다 (대소문자는 무관).
 
-
-### License
-
-MIT — see [LICENSE](LICENSE)
