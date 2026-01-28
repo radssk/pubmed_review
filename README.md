@@ -53,7 +53,7 @@ https://docs.google.com/spreadsheets/d/XXXXXXXX/edit
 
 ### 3. 실행
 
-- **자동**: 3일마다 (GitHub Actions)
+- **자동**: 매일 02:00 UTC (GitHub Actions)
 - **수동**: Actions 탭 → Run workflow
 
 ## Cost Estimation
@@ -64,7 +64,7 @@ https://docs.google.com/spreadsheets/d/XXXXXXXX/edit
 | **gpt-5-mini** | $0.25 | $2.00 | ~$0.10 |
 | **gpt-5.2** | $1.75 | $14.00 | ~$0.70 |
 
-\* 3일마다 실행, 30개 논문/회 기준. PubMed API와 Google Sheets API는 무료.
+\* 매일 실행, 30개 논문/회 기준. PubMed API와 Google Sheets API는 무료.
 
 ## Miscellaneous
 
