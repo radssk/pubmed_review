@@ -133,8 +133,15 @@ def load_config(path: str) -> dict:
     return config
 
 
-def validate_config(config: dict) -> None:
-    """Validate configuration has all required fields."""
+def validate_config(config: dict, skip_env_fields: bool = False) -> None:
+    """Validate configuration has all required fields.
+
+    Args:
+        config: The configuration dictionary to validate.
+        skip_env_fields: If True, skip validation of fields that can be
+            provided via environment variables (useful for dry-run mode
+            where secrets may not be available).
+    """
     errors = []
 
     # Check pubmed section
@@ -143,9 +150,10 @@ def validate_config(config: dict) -> None:
     else:
         pubmed = config["pubmed"]
 
-        # Check email
-        if not pubmed.get("email") and not os.environ.get("PUBMED_EMAIL"):
-            errors.append("Missing required field: pubmed.email (or PUBMED_EMAIL env var)")
+        # Check email (can be provided via PUBMED_EMAIL env var)
+        if not skip_env_fields:
+            if not pubmed.get("email") and not os.environ.get("PUBMED_EMAIL"):
+                errors.append("Missing required field: pubmed.email (or PUBMED_EMAIL env var)")
 
         # Check searches
         if "searches" not in pubmed or not pubmed["searches"]:
@@ -155,10 +163,11 @@ def validate_config(config: dict) -> None:
                 if not search.get("query"):
                     errors.append(f"Missing query in pubmed.searches[{i}]")
 
-    # Check sheets config
-    sheets = config.get("sheets", {})
-    if not sheets.get("spreadsheet_id") and not os.environ.get("SPREADSHEET_ID"):
-        errors.append("Missing required field: sheets.spreadsheet_id (or SPREADSHEET_ID env var)")
+    # Check sheets config (can be provided via SPREADSHEET_ID env var)
+    if not skip_env_fields:
+        sheets = config.get("sheets", {})
+        if not sheets.get("spreadsheet_id") and not os.environ.get("SPREADSHEET_ID"):
+            errors.append("Missing required field: sheets.spreadsheet_id (or SPREADSHEET_ID env var)")
 
     # Check filters section
     if "filters" not in config:
@@ -710,13 +719,15 @@ def main() -> None:
     # Load and validate configuration
     config_path = os.environ.get("CONFIG_PATH", "config.yaml")
     config = load_config(config_path)
-    validate_config(config)
 
     # Check for dry-run mode
     dry_run = os.environ.get("DRY_RUN", "").lower() in ("true", "1", "yes")
     if dry_run:
+        validate_config(config, skip_env_fields=True)
         LOGGER.info("DRY RUN MODE - No API calls will be made")
         return
+
+    validate_config(config)
 
     # Setup PubMed
     pubmed_config = config.get("pubmed", {})
