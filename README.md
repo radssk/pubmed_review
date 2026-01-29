@@ -6,6 +6,7 @@
 PubMed 쿼리 검색 → Selected Journal? → Yes → AI 요약/강점 정리 → 시트 저장
                                    → No  → 참신함? → AI 요약/강점 정리 → 시트 저장
                                                   → 아님  → 스킵
+(매일 반복)
 ```
 
 
