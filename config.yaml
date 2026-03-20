@@ -1,11 +1,9 @@
 pubmed:
   searches:
-    - query: '("Radiology") AND (("large language model") OR ("natural language processing") OR ("GPT"))'
-      sheet_name: "Radiology NLP"
-    # - query: '("CT") AND ("deep learning")'
-    #   sheet_name: "CT Deep Learning"
-    # - query: '("MRI") AND ("artificial intelligence")'
-    #   sheet_name: "MRI AI"
+    - query: '(("agentic AI") OR ("AI agent") OR ("agentic") OR ("autonomous agent") OR ("multi-agent") OR ("LLM agent")) AND (("medicine") OR ("healthcare") OR ("clinical") OR ("medical"))'
+      sheet_name: "Agentic AI Medicine"
+    - query: '("Radiology" OR "medical imaging") AND (("vision language model") OR ("vision-language model") OR ("VLM") OR ("multimodal large language model") OR ("multimodal LLM") OR ("visual language model"))'
+      sheet_name: "Radiology VLM"
 
 filters:
   # Selected journals (journals you always want to track)
@@ -20,7 +18,10 @@ filters:
     "The Lancet*",       # The Lancet, The Lancet Oncology, etc.
     "The New England journal of medicine",
     "JAMA",              # JAMA only (not JAMA Network journals)
+    "JAMA network open",
+    "BMJ",               # British Medical Journal
     "Scientific reports",
+    "NEJM AI",
 
     # Radiology (specific journals)
     "Abdominal radiology",
@@ -36,10 +37,17 @@ filters:
     "Academic radiology",
     "Korean journal of radiology",
     "Insights into imaging",
+    "AJNR. American journal of neuroradiology",
+    "Journal of magnetic resonance imaging",
 
-    # Digital Health
+    # Digital Health & Clinical Informatics
     "npj Digital Medicine",
     "The Lancet. Digital health",
+    "Communications medicine",
+    "Cell reports medicine",
+    "Journal of the American Medical Informatics Association",
+    "Journal of biomedical informatics",
+    "Patterns",
 
     # AI & Medical Imaging
     "Nature Machine Intelligence",
