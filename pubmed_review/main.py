@@ -442,6 +442,18 @@ def get_existing_titles(service, sheet_id: str, sheet_name: str) -> set[str]:
         return set()
 
 
+def ensure_sheet_exists(service, sheet_id: str, sheet_name: str) -> None:
+    """Create sheet tab if it doesn't exist."""
+    spreadsheet = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in spreadsheet.get("sheets", [])]
+    if sheet_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": sheet_name}}}]}
+        ).execute()
+        LOGGER.info("Created new sheet tab: %s", sheet_name)
+
+
 def ensure_headers(service, sheet_id: str, sheet_name: str) -> None:
     """Ensure sheet has column headers."""
     try:
@@ -637,7 +649,8 @@ def process_search(
         LOGGER.info("No new PMIDs found")
         return
 
-    # Ensure headers exist
+    # Ensure sheet tab and headers exist
+    ensure_sheet_exists(service, sheet_id, sheet_name)
     ensure_headers(service, sheet_id, sheet_name)
 
     # Fetch article data
